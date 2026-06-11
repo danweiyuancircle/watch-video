@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 
@@ -34,7 +35,12 @@ private fun PlayerScreen(m3u8Url: String, title: String) {
 
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
-            setMediaItem(MediaItem.fromUri(m3u8Url))
+            setMediaItem(
+                MediaItem.Builder()
+                    .setUri(m3u8Url)
+                    .setMimeType(MimeTypes.APPLICATION_M3U8)
+                    .build()
+            )
             prepare()
             playWhenReady = true
         }
