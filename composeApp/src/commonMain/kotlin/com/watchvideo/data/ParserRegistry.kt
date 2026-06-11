@@ -4,7 +4,7 @@ import com.watchvideo.data.parsers.XiaobaoParser
 import io.ktor.client.HttpClient
 
 object ParserRegistry {
-    private val client = HttpClient()
+    private val client = createHttpClient()
     private val parsers: List<SiteParser> = listOf(
         XiaobaoParser(client)
     )

@@ -15,6 +15,9 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
+class SiteParseException(siteKey: String, message: String, cause: Throwable? = null) :
+    Exception("[$siteKey] $message", cause)
+
 class XiaobaoParser(private val client: HttpClient) : SiteParser {
     override val siteKey = "xiaobao"
     override val siteName = "小宝影院"
@@ -34,7 +37,11 @@ class XiaobaoParser(private val client: HttpClient) : SiteParser {
 
     override suspend fun playInfo(playPageUrl: String): PlayInfo {
         val html = fetch(playPageUrl)
-        return parsePlayInfo(html)
+        return try {
+            parsePlayInfo(html)
+        } catch (e: Exception) {
+            throw SiteParseException(siteKey, "playInfo 解析失败: $playPageUrl", e)
+        }
     }
 
     private suspend fun fetch(url: String): String {
@@ -48,16 +55,13 @@ class XiaobaoParser(private val client: HttpClient) : SiteParser {
 
     private fun parseSearchResults(html: String): List<SearchResult> {
         val results = mutableListOf<SearchResult>()
-        val linkPattern = Regex("""href="/vod/detail/(\d+)\.html"[^>]+title="([^"]+)"""")
+        val liPattern = Regex("""<li[^>]*>.*?href="/vod/detail/(\d+)\.html"[^>]+title="([^"]+)".*?</li>""", RegexOption.DOT_MATCHES_ALL)
         val imgPattern = Regex("""data-original="([^"]+)"""")
 
-        val matches = linkPattern.findAll(html).toList()
-        val imgs = imgPattern.findAll(html).toList()
-
-        matches.forEachIndexed { index, match ->
-            val id = match.groupValues[1]
-            val title = match.groupValues[2]
-            val cover = imgs.getOrNull(index)?.groupValues?.get(1)?.let { path ->
+        liPattern.findAll(html).forEach { liMatch ->
+            val id = liMatch.groupValues[1]
+            val title = liMatch.groupValues[2]
+            val cover = imgPattern.find(liMatch.value)?.groupValues?.get(1)?.let { path ->
                 if (path.startsWith("http")) path else "$baseUrl$path"
             } ?: ""
             results.add(SearchResult(id = id, title = title, cover = cover, siteKey = siteKey))
@@ -97,10 +101,10 @@ class XiaobaoParser(private val client: HttpClient) : SiteParser {
         val rawUrl = playerJson["url"]?.jsonPrimitive?.content
             ?: throw IllegalStateException("未找到播放地址")
 
-        val m3u8Url = if (encrypt == 1) {
-            decodeBase64(rawUrl)
-        } else {
-            rawUrl
+        val m3u8Url = when (encrypt) {
+            1 -> decodeBase64(rawUrl)
+            2 -> decodeUrlPercent(rawUrl)
+            else -> rawUrl
         }
 
         val vodData = playerJson["vod_data"]?.jsonObject
@@ -109,12 +113,24 @@ class XiaobaoParser(private val client: HttpClient) : SiteParser {
         return PlayInfo(m3u8Url = m3u8Url, title = title)
     }
 
-    private fun decodeBase64(encoded: String): String {
-        return try {
-            @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
-            String(kotlin.io.encoding.Base64.decode(encoded))
-        } catch (e: Exception) {
-            encoded
+    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
+    private fun decodeBase64(encoded: String): String =
+        String(kotlin.io.encoding.Base64.decode(encoded))
+
+    private fun decodeUrlPercent(encoded: String): String {
+        val sb = StringBuilder()
+        var i = 0
+        while (i < encoded.length) {
+            when {
+                encoded[i] == '%' && i + 2 < encoded.length -> {
+                    val hex = encoded.substring(i + 1, i + 3)
+                    sb.append(hex.toInt(16).toChar())
+                    i += 3
+                }
+                encoded[i] == '+' -> { sb.append(' '); i++ }
+                else -> { sb.append(encoded[i]); i++ }
+            }
         }
+        return sb.toString()
     }
 }
