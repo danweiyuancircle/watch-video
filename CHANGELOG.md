@@ -11,6 +11,14 @@
 
 ---
 
+## [v1.0.1] - 2026-06-12
+
+### 修复
+- 修复 CI 构建失败：开启 `buildFeatures.buildConfig`，解决 `BuildConfig` 无法解析的编译错误
+- Release 构建下 logD 不输出日志，避免搜索词写入 logcat
+
+---
+
 ## [v1.0.0] - 2026-06-12
 
 ### 新增
