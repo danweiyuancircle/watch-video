@@ -31,7 +31,6 @@ class SearchViewModel {
     val history: StateFlow<List<String>> = _history.asStateFlow()
 
     fun onQueryChange(query: String) {
-        com.watchvideo.logD("WV", "onQueryChange: '$query'")
         _query.value = query
     }
 
