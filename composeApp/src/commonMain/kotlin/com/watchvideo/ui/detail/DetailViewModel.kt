@@ -29,6 +29,12 @@ class DetailViewModel {
     private val _isLoadingPlay = MutableStateFlow(false)
     val isLoadingPlay: StateFlow<Boolean> = _isLoadingPlay.asStateFlow()
 
+    private val _currentRouteIndex = MutableStateFlow(0)
+    val currentRouteIndex: StateFlow<Int> = _currentRouteIndex.asStateFlow()
+
+    private val _currentEpisodeIndex = MutableStateFlow(-1)
+    val currentEpisodeIndex: StateFlow<Int> = _currentEpisodeIndex.asStateFlow()
+
     fun loadDetail(siteKey: String, id: String) {
         scope.launch {
             _isLoading.value = true
@@ -44,13 +50,15 @@ class DetailViewModel {
         }
     }
 
-    fun loadPlayInfo(siteKey: String, playPageUrl: String) {
+    fun selectEpisode(siteKey: String, routeIndex: Int, episodeIndex: Int, playUrl: String) {
+        _currentRouteIndex.value = routeIndex
+        _currentEpisodeIndex.value = episodeIndex
         scope.launch {
             _isLoadingPlay.value = true
             _error.value = null
             try {
                 val parser = ParserRegistry.get(siteKey)
-                _playInfo.value = parser.playInfo(playPageUrl)
+                _playInfo.value = parser.playInfo(playUrl)
             } catch (e: Exception) {
                 _error.value = "获取播放地址失败: ${e.message}"
             } finally {

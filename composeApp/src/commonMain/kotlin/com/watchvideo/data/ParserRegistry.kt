@@ -1,12 +1,12 @@
 package com.watchvideo.data
 
-import com.watchvideo.data.parsers.XiaobaoParser
+import com.watchvideo.data.parsers.ModuParser
 import io.ktor.client.HttpClient
 
 object ParserRegistry {
     private val client = createHttpClient()
     private val parsers: List<SiteParser> = listOf(
-        XiaobaoParser(client)
+        ModuParser(client)
     )
 
     fun all(): List<SiteParser> = parsers

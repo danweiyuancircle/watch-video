@@ -34,6 +34,7 @@ kotlin {
             implementation(libs.media3.exoplayer)
             implementation(libs.media3.exoplayer.hls)
             implementation(libs.media3.ui)
+            implementation(libs.material.icons.extended)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -42,6 +43,7 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.encoding)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.coil.compose)

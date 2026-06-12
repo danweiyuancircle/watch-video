@@ -39,9 +39,7 @@ fun App() {
                 siteKey = siteKey,
                 vodId = id,
                 title = title,
-                onPlay = { playInfo ->
-                    openPlayer(playInfo.m3u8Url, playInfo.title)
-                }
+                onBack = { navController.popBackStack() }
             )
         }
     }
