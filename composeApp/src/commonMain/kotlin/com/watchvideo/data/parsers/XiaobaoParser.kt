@@ -57,19 +57,16 @@ class XiaobaoParser(private val client: HttpClient) : SiteParser {
     }
 
     private fun parseSearchResults(html: String): List<SearchResult> {
-        val results = mutableListOf<SearchResult>()
-        val liPattern = Regex("""<li[^>]*>.*?href="/vod/detail/(\d+)\.html"[^>]+title="([^"]+)".*?</li>""", RegexOption.DOT_MATCHES_ALL)
-        val imgPattern = Regex("""data-original="([^"]+)"""")
-
-        liPattern.findAll(html).forEach { liMatch ->
-            val id = liMatch.groupValues[1]
-            val title = liMatch.groupValues[2]
-            val cover = imgPattern.find(liMatch.value)?.groupValues?.get(1)?.let { path ->
-                if (path.startsWith("http")) path else "$baseUrl$path"
-            } ?: ""
-            results.add(SearchResult(id = id, title = title, cover = cover, siteKey = siteKey))
-        }
-        return results
+        // 封面图 <a> 标签属性顺序固定：class → href → title → data-original
+        // class 以 myui-vodlist__thumb 开头，精确锁定搜索结果卡片，避免误匹配侧边栏
+        val pattern = Regex("""<a class="myui-vodlist__thumb[^"]*" href="/vod/detail/(\d+)\.html" title="([^"]+)" data-original="([^"]+)"""")
+        return pattern.findAll(html).map { m ->
+            val id = m.groupValues[1]
+            val title = m.groupValues[2]
+            val imgPath = m.groupValues[3]
+            val cover = if (imgPath.startsWith("http")) imgPath else "$baseUrl$imgPath"
+            SearchResult(id = id, title = title, cover = cover, siteKey = siteKey)
+        }.toList()
     }
 
     private fun parseRoutes(html: String): List<Route> {
