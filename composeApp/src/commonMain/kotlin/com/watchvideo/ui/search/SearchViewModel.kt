@@ -40,25 +40,26 @@ class SearchViewModel {
             _error.value = null
             _results.value = emptyList()
 
-            try {
-                val allResults = ParserRegistry.all()
-                    .map { parser ->
-                        async {
-                            try {
-                                parser.search(keyword)
-                            } catch (e: Exception) {
-                                emptyList()
-                            }
+            val errors = mutableListOf<String>()
+            val allResults = ParserRegistry.all()
+                .map { parser ->
+                    async {
+                        try {
+                            parser.search(keyword)
+                        } catch (e: Exception) {
+                            errors.add("${parser.siteName}: ${e.message}")
+                            emptyList()
                         }
                     }
-                    .awaitAll()
-                    .flatten()
-                _results.value = allResults
-            } catch (e: Exception) {
-                _error.value = "搜索失败: ${e.message}"
-            } finally {
-                _isLoading.value = false
+                }
+                .awaitAll()
+                .flatten()
+
+            _results.value = allResults
+            if (allResults.isEmpty() && errors.isNotEmpty()) {
+                _error.value = errors.joinToString("\n")
             }
+            _isLoading.value = false
         }
     }
 }

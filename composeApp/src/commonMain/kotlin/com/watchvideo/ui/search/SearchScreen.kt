@@ -23,7 +23,12 @@ fun SearchScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .safeContentPadding()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
                 value = query,
